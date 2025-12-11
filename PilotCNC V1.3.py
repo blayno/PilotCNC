@@ -31,7 +31,7 @@ GRBL_BUFFER_MAX = 16      # GRBL 1.2h planner buffer (safe)
 class CNCSenderApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Pilot CNC V1.2")
+        self.root.title("Pilot CNC V1.3")
         self.root.geometry("1280x880")
 
         # Schedule the logo window to appear AFTER the GUI loads.
@@ -177,7 +177,7 @@ class CNCSenderApp:
             self.logo_photo = ImageTk.PhotoImage(logo_image)
 
             logo_window = tk.Toplevel(self.root)
-            logo_window.title("PilotMill Logo")
+            logo_window.title("PilotCNC Logo")
             logo_window.geometry(f"{logo_image.width}x{logo_image.height}")
             logo_window.resizable(False, False)
 
@@ -1581,7 +1581,7 @@ class CNCSenderApp:
 
 
     def _pipeline_send_loop_grbl12h(self):
-        update_interval = 25
+        update_interval = 5 # ----------- Simulation Update Interval---------------------
         sim_yield = 0.002
 
         while self.current_line_index < self.total_lines:
@@ -1686,16 +1686,30 @@ class CNCSenderApp:
             except Exception:
                 pass
 
-        # ----------------- Draw full toolpath on load -----------------
-        if gcode_lines:
-            self.vis_x = []
-            self.vis_y = []
-            self.vis_z = []
 
-            sim_x, sim_y, sim_z = 0, 0, 0
+# ----------------- Draw full toolpath on load -----------------
+        if gcode_lines:
+            # build segments (list of continuous segments), each segment is a list of (x,y,z)
+            rapid_segs = []   # segments for G0
+            cut_segs = []     # segments for G1/G2/G3
+
+            # current segment buffer and its type ('G0' or 'G1')
+            cur_seg = []
+            cur_mode = None
+
+            sim_x, sim_y, sim_z = 0.0, 0.0, 0.0
 
             for line in gcode_lines:
-                # Match X, Y, Z with optional spaces
+                up = line.upper()
+                # determine motion command on this line (modal parsing: change mode if G0/G1/G2/G3 present)
+                if "G0" in up:
+                    mode = "G0"
+                elif "G1" in up or "G2" in up or "G3" in up:
+                    mode = "G1"
+                else:
+                    mode = cur_mode or "G1"  # keep previous mode, default to G1
+
+                # update coordinates if present
                 coords = re.findall(r"[XYZ]\s*-?\d+\.?\d*", line, flags=re.IGNORECASE)
                 for c in coords:
                     try:
@@ -1710,26 +1724,71 @@ class CNCSenderApp:
                     except Exception:
                         pass
 
-                self.vis_x.append(sim_x)
-                self.vis_y.append(sim_y)
-                self.vis_z.append(sim_z)
+                # if mode changed, flush current segment to appropriate list and start new one
+                if cur_mode is None:
+                    cur_mode = mode
 
+                if mode != cur_mode:
+                    # flush
+                    if cur_seg:
+                        if cur_mode == "G0":
+                            rapid_segs.append(cur_seg)
+                        else:
+                            cut_segs.append(cur_seg)
+                    cur_seg = []
+                    cur_mode = mode
+
+                # append current point to current segment
+                cur_seg.append((sim_x, sim_y, sim_z))
+
+            # flush last segment
+            if cur_seg:
+                if cur_mode == "G0":
+                    rapid_segs.append(cur_seg)
+                else:
+                    cut_segs.append(cur_seg)
+
+            # now plot: clear axes and plot each segment separately
             if redraw:
                 try:
                     self.ax.cla()
-                    self.ax.plot(self.vis_x, self.vis_y, self.vis_z, color='blue', linewidth=2)
 
-                    # Set axes limits with padding
-                    padding = 5
-                    if self.vis_x and self.vis_y and self.vis_z:
-                        self.ax.set_xlim(min(self.vis_x)-padding, max(self.vis_x)+padding)
-                        self.ax.set_ylim(min(self.vis_y)-padding, max(self.vis_y)+padding)
-                        self.ax.set_zlim(min(self.vis_z)-padding, max(self.vis_z)+padding)
+                    # plot cutting segments (blue)
+                    for seg in cut_segs:
+                        xs = [p[0] for p in seg]
+                        ys = [p[1] for p in seg]
+                        zs = [p[2] for p in seg]
+                        if len(xs) >= 2:
+                            self.ax.plot(xs, ys, zs, linewidth=0.35, color='blue')
+                        else:
+                            # single points as small markers (optional)
+                            self.ax.scatter(xs, ys, zs, s=2)
 
-                        # Set aspect ratio proportional to ranges
-                        dx = max(self.vis_x)-min(self.vis_x)+1
-                        dy = max(self.vis_y)-min(self.vis_y)+1
-                        dz = max(self.vis_z)-min(self.vis_z)+1
+                    # plot rapid segments (yellow)
+                    for seg in rapid_segs:
+                        xs = [p[0] for p in seg]
+                        ys = [p[1] for p in seg]
+                        zs = [p[2] for p in seg]
+                        if len(xs) >= 2:
+                            self.ax.plot(xs, ys, zs, linewidth=0.6, color='red')
+                        else:
+                            self.ax.scatter(xs, ys, zs, s=4)
+
+                    # compute bounds from everything plotted
+                    all_points = []
+                    for seg in cut_segs + rapid_segs:
+                        all_points.extend(seg)
+                    if all_points:
+                        all_x = [p[0] for p in all_points]
+                        all_y = [p[1] for p in all_points]
+                        all_z = [p[2] for p in all_points]
+                        padding = 5
+                        self.ax.set_xlim(min(all_x)-padding, max(all_x)+padding)
+                        self.ax.set_ylim(min(all_y)-padding, max(all_y)+padding)
+                        self.ax.set_zlim(min(all_z)-padding, max(all_z)+padding)
+                        dx = max(all_x)-min(all_x)+1
+                        dy = max(all_y)-min(all_y)+1
+                        dz = max(all_z)-min(all_z)+1
                         self.ax.set_box_aspect([dx, dy, dz])
 
                     self.ax.set_xlabel("X")
@@ -1737,13 +1796,13 @@ class CNCSenderApp:
                     self.ax.set_zlabel("Z")
                     self.ax.set_title("Toolpath Simulation")
 
-                    # Draw canvas
                     try:
                         self.canvas.draw_idle()
                     except Exception:
                         self.canvas.draw()
                 except Exception as e:
                     self._log(f"Visualization error: {e}")
+
 
         # ----------------- Move yellow cone for single G-code line -----------------
         if gcode_line:
