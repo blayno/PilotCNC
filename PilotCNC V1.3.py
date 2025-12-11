@@ -1581,7 +1581,7 @@ class CNCSenderApp:
 
 
     def _pipeline_send_loop_grbl12h(self):
-        update_interval = 5 # ----------- Simulation Update Interval---------------------
+        update_interval = 15 # ----------- Simulation Update Interval---------------------
         sim_yield = 0.002
 
         while self.current_line_index < self.total_lines:
