@@ -257,15 +257,18 @@ class CNCSenderApp:
         ttk.Scale(f, from_=0.1, to=5.0, variable=self.sim_speed, orient='horizontal', length=160).grid(row=1, column=3)
 
         ttk.Button(f, text="Play", command=self.start_pipeline_send).grid(row=4, column=0)
-        ttk.Button(f, text="Stop", command=self.stop_pipeline_send).grid(row=4, column=1)
+        ttk.Button(f, text="Stop", command=self.stop_pipeline_send).grid(row=4, column=1, sticky='w')
 
         ttk.Button(f, text="Home (H)", command=lambda: self._send_line("$H")).grid(row=4, column=4, padx=6)
         ttk.Button(f, text="Feed Hold (!)", command=lambda: self._send_line("!")).grid(row=4, column=5, padx=6)
         ttk.Button(f, text="Cycle Start (~)", command=lambda: self._send_line("~")).grid(row=4, column=6, padx=6)
 
-        ttk.Label(f, text="Status:").grid(row=4, column=2, sticky='e')
-        ttk.Label(f, textvariable=self.status_var, foreground="blue").grid(row=4, column=3, sticky='w')
-
+        ttk.Label(f, text="Status:").grid(row=4, column=2, sticky='w')
+        ttk.Label(f, textvariable=self.status_var, foreground="blue").grid(row=4, column=2)
+        
+        ttk.Button(f, text="Spindle Run (M3)", command=lambda: self._send_line("M3")).grid(row=4, column=3, padx=6, sticky= 'w')
+        ttk.Button(f, text="Spindle Stop (M5)", command=lambda: self._send_line("M5")).grid(row=4, column=3, padx=6, sticky= 'e')
+        
         self.progress = ttk.Progressbar(f, orient='horizontal', length=760, mode='determinate')
         self.progress.grid(row=5, column=0, columnspan=7, pady=8, sticky='ew')
 
