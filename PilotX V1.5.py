@@ -31,11 +31,13 @@ GRBL_BUFFER_MAX = 16      # GRBL 1.2h planner buffer (safe)
 class CNCSenderApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Pilot X V1.4")
+        self.root.title("Pilot X V1.5")
         self.root.geometry("1280x880")
 
         # Schedule the logo window to appear AFTER the GUI loads.
         self.root.after(300, self.show_logo_window)
+        
+        
         
         
         #Load Json File For Previous Settings
@@ -224,15 +226,16 @@ class CNCSenderApp:
         # Notebook: Sender tab + Auto-Level tab
         nb = ttk.Notebook(self.root)
         nb.pack(fill='both', expand=True, padx=6, pady=6)
+        
 
         # --- Sender Tab ---
         sender_frame = ttk.Frame(nb, padding=8)
         nb.add(sender_frame, text="Sender")
-        
-
 
         f = ttk.Frame(sender_frame, padding=4)
         f.pack(fill='both', expand=True)
+        
+
 
         # --- Serial / G-code Controls ---
         ttk.Label(f, text="COM Port:").grid(row=0, column=0, sticky='w')
@@ -383,6 +386,10 @@ class CNCSenderApp:
         # Visualizer on right
         vis_frame = ttk.Frame(jog_vis_frame, padding=8)
         vis_frame.grid(row=0, column=1, sticky='ne', padx=10)
+        
+
+#----------------------------------------------------------------------------------
+
 
         # # Clear button moved ABOVE visualizer
         # ttk.Button(vis_frame, text="Clear Visualizer", command=self._clear_visualizer).pack(pady=(0, 6))
@@ -396,6 +403,25 @@ class CNCSenderApp:
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=vis_frame)
         self.canvas.get_tk_widget().pack(fill='both', expand=True)
+        
+        #---------- Draw Legend inside matplotlib------------
+        import matplotlib.lines as mlines
+
+        # --- Create legend proxies ---
+        rapid_proxy = mlines.Line2D([0], [0], color='red', linewidth=2)
+        cut_proxy   = mlines.Line2D([0], [0], color='blue', linewidth=2)
+        Pos_proxy   = mlines.Line2D([0], [0], color='Yellow', linewidth=8)
+        
+        # --- Add figure-level legend to your existing figure ---
+        self.fig.legend([rapid_proxy, cut_proxy,Pos_proxy],
+                        ['Rapid (G0)', 'Cut Path (G1)', 'Position'],
+                        loc='upper right',
+                        framealpha=0.8)
+
+        # --- Redraw canvas ---
+        self.canvas.draw_idle()
+        self.canvas.flush_events()
+        #---------------------------------------------------------------
         
                 # logo on right of visualiser
         logo_frame = ttk.Frame(jog_vis_frame, padding=8)
@@ -437,7 +463,9 @@ class CNCSenderApp:
 
         self._build_macro_ui(macro_tab)
         self._build_probe_ui(probe_tab)
-        self._build_autolevel_ui(al_frame)                
+        self._build_autolevel_ui(al_frame)
+        
+                
 
                        
         
@@ -710,6 +738,8 @@ class CNCSenderApp:
         
         ttk.Button(ss_frame, text="Save UI Settings",
                   command=self.update_ui_settings).grid(row=0, column=0, padx=10) 
+
+
 
 # ------------------ estop function ----------------------------------------------
     def send_realtime(self, b):
