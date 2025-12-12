@@ -31,7 +31,7 @@ GRBL_BUFFER_MAX = 16      # GRBL 1.2h planner buffer (safe)
 class CNCSenderApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Pilot X V1.3")
+        self.root.title("Pilot X V1.4")
         self.root.geometry("1280x880")
 
         # Schedule the logo window to appear AFTER the GUI loads.
@@ -235,39 +235,57 @@ class CNCSenderApp:
         f.pack(fill='both', expand=True)
 
         # --- Serial / G-code Controls ---
-        ttk.Label(f, text="COM Port:").grid(row=0, column=0, sticky='e')
+        ttk.Label(f, text="COM Port:").grid(row=0, column=0, sticky='w')
         self.port_cb = ttk.Combobox(f, values=self._list_serial_ports(), width=18)
-        self.port_cb.grid(row=0, column=1,sticky='w', padx=4)
+        self.port_cb.grid(row=0, column=0,sticky='e', padx=4)
         if self.port_cb['values']:
             self.port_cb.current(0)
 
-        ttk.Label(f, text="Baud:").grid(row=0, column=1, sticky='e')
+        ttk.Label(f, text="Baud Rate:").grid(row=0, column=1, sticky='w')
         self.baud_cb = ttk.Combobox(f, values=["115200", "250000", "57600", "9600"], width=10)
-        self.baud_cb.grid(row=0, column=2,sticky='w', padx=4)
+        self.baud_cb.grid(row=0, column=1, padx=4)
         self.baud_cb.set("115200")
 
-        ttk.Button(f, text="Refresh", command=self.refresh).grid(row=0, column=3,sticky='w', padx=6)
-        ttk.Button(f, text="Connect", command=self.connect_serial).grid(row=0, column=4, padx=6)
-        ttk.Button(f, text="Disconnect", command=self.disconnect_serial).grid(row=0, column=5, padx=6)
-        ttk.Button(f, text="Unlock ($X)", command=self.unlock_machine).grid(row=0, column=6, padx=6)
+        ttk.Button(f, text="Refresh", command=self.refresh).grid(row=0, column=1,sticky='e', padx=6)
+        ttk.Button(f, text="Connect", command=self.connect_serial).grid(row=0, column=3, padx=6, sticky='w')
+        #ttk.Button(f, text="Blank",).grid(row=1, column=3, padx=6, sticky='w')
+        ttk.Button(f, text="Disconnect", command=self.disconnect_serial).grid(row=0, column=3, padx=6,sticky='e')
+        #ttk.Button(f, text="Blank",).grid(row=1, column=3, padx=6,sticky='e')
+        ttk.Button(f, text="Unlock $X", command=self.unlock_machine).grid(row=0, column=4, padx=6, sticky='e')
+        #ttk.Button(f, text="Blank",).grid(row=1, column=4, padx=6, sticky='e')
 
-        ttk.Button(f, text="Load G-code", command=self.load_gcode_file).grid(row=1, column=0, pady=8)
-        ttk.Checkbutton(f, text="Simulation Mode", variable=self.simulate_mode).grid(row=1, column=1)
-        ttk.Label(f, text="Sim Speed:").grid(row=1, column=2, sticky='e')
-        ttk.Scale(f, from_=0.1, to=5.0, variable=self.sim_speed, orient='horizontal', length=160).grid(row=1, column=3)
-
-        ttk.Button(f, text="Play", command=self.start_pipeline_send).grid(row=4, column=0)
-        ttk.Button(f, text="Stop", command=self.stop_pipeline_send).grid(row=4, column=1, sticky='w')
-
-        ttk.Button(f, text="Home (H)", command=lambda: self._send_line("$H")).grid(row=4, column=4, padx=6)
-        ttk.Button(f, text="Feed Hold (!)", command=lambda: self._send_line("!")).grid(row=4, column=5, padx=6)
-        ttk.Button(f, text="Cycle Start (~)", command=lambda: self._send_line("~")).grid(row=4, column=6, padx=6)
-
-        ttk.Label(f, text="Status:").grid(row=4, column=2, sticky='w')
-        ttk.Label(f, textvariable=self.status_var, foreground="blue").grid(row=4, column=2)
+        ttk.Button(f, text="Load G-code", command=self.load_gcode_file).grid(row=1, column=0, pady=8, sticky='w')
+        ttk.Checkbutton(f, text="Simulation Mode", variable=self.simulate_mode).grid(row=1, column=0, sticky='e')
+        ttk.Label(f, text="Sim Speed:").grid(row=1, column=1, sticky='w')
+        ttk.Scale(f, from_=0.1, to=5.0, variable=self.sim_speed, orient='horizontal', length=160).grid(row=1, column=1, sticky='e')
         
-        ttk.Button(f, text="Spindle Run (M3)", command=lambda: self._send_line("M3")).grid(row=4, column=3, padx=6, sticky= 'w')
-        ttk.Button(f, text="Spindle Stop (M5)", command=lambda: self._send_line("M5")).grid(row=4, column=3, padx=6, sticky= 'e')
+        style = ttk.Style()
+        style.configure("green.TButton", foreground="green")       
+        ttk.Button(f, text="Play",style="green.TButton", command=self.start_pipeline_send).grid(row=4, column=0, sticky='w')
+        
+        style = ttk.Style()
+        style.configure("blue.TButton", foreground="blue")        
+        ttk.Button(f, text="Stop",style="blue.TButton", command=self.stop_pipeline_send).grid(row=4, column=0)
+        
+        style = ttk.Style()
+        style.configure("Red.TButton", foreground="red")
+        ttk.Button(f,text="E Stop/Sft Rst",style="Red.TButton",command=lambda: self.send_realtime(b"\x18")).grid(row=4, column=0, sticky="e")
+            
+            
+            
+        
+
+
+        ttk.Button(f, text="Home $H", command=lambda: self._send_line("$H")).grid(row=0, column=4, padx=6,sticky='w')
+        #ttk.Button(f, text="Blank",).grid(row=1, column=4, padx=6,sticky='w')
+        ttk.Button(f, text="Feed Hold !", command=lambda: self._send_line("!")).grid(row=4, column=4, padx=6,sticky='w')
+        ttk.Button(f, text="Cycle Start ~", command=lambda: self._send_line("~")).grid(row=4, column=4, padx=6, sticky='e')
+
+        ttk.Label(f, text="Status:").grid(row=4, column=1, sticky='e')
+        ttk.Label(f, textvariable=self.status_var, foreground="blue").grid(row=4, column=2, sticky='w')
+        
+        ttk.Button(f, text="Spindle Run M3", command=lambda: self._send_line("M3")).grid(row=4, column=3, padx=6, sticky= 'w')
+        ttk.Button(f, text="Spindle Stop M5", command=lambda: self._send_line("M5")).grid(row=4, column=3, padx=6, sticky= 'e')
         
         self.progress = ttk.Progressbar(f, orient='horizontal', length=760, mode='determinate')
         self.progress.grid(row=5, column=0, columnspan=7, pady=8, sticky='ew')
@@ -691,7 +709,30 @@ class CNCSenderApp:
         ss_frame.pack(fill='x', pady=5)
         
         ttk.Button(ss_frame, text="Save UI Settings",
-                  command=self.update_ui_settings).grid(row=0, column=0, padx=10)                
+                  command=self.update_ui_settings).grid(row=0, column=0, padx=10) 
+
+# ------------------ estop function ----------------------------------------------
+    def send_realtime(self, b):
+        self._log(f"Soft Reset")
+        if self.serial_connection and self.serial_connection.is_open:
+            try:
+                self.serial_connection.write(b)
+                self.serial_connection.flush()
+                
+            except Exception as e:
+                print("Realtime send error:", e)
+                
+        self.send_manager_stop.set()
+        self.send_manager_pause.clear()
+        self.status_var.set("Stopped")
+        self.current_line_index = 0
+        self.pending_lines.clear()
+        try:
+            self.progress['value'] = 0
+            self.current_label.config(text="Line: 0 / 0")
+        except Exception:
+            pass                
+                  
 
                   
     #------------------- Autolevel Ready Functions---------------------------------------
@@ -1516,6 +1557,8 @@ class CNCSenderApp:
         # >>> draw gcode on load <<<
         self._update_toolpath(gcode_lines=self.gcode_lines, redraw=True)
         self._log(f"Loaded {self.total_lines} lines from {path}")
+        
+        
 
 
     def _send_line(self, line):

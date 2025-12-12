@@ -1,7 +1,7 @@
 Download and install python 3
 Make sure you add python to path during installation
 proceed to install dependencies below using windows cmd, copy and paste contents below singally into cmd window
-to install dependencies needed to run PilotCNC V1.2
+to install dependencies needed to run PilotX V1.2
 
 pip install pyserial
 pip install numpy
