@@ -31,7 +31,7 @@ GRBL_BUFFER_MAX = 16      # GRBL 1.2h planner buffer (safe)
 class CNCSenderApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Pilot X V1.5")
+        self.root.title("Pilot X V1.6")
         self.root.geometry("1280x880")
 
         # Schedule the logo window to appear AFTER the GUI loads.
@@ -478,6 +478,7 @@ class CNCSenderApp:
         # ---- Add Macro Section ----
         add_frame = ttk.LabelFrame(frame, text="Add New Macro", padding=8)
         add_frame.pack(fill='x', pady=6)
+        
 
         ttk.Label(add_frame, text="Macro Name:").grid(row=0, column=0, sticky='e')
         self.macro_name_entry = ttk.Entry(add_frame, width=25)
@@ -488,6 +489,8 @@ class CNCSenderApp:
         self.macro_text_entry.grid(row=1, column=1, padx=5, pady=5)
 
         ttk.Button(add_frame, text="Add Macro", command=self._add_macro).grid(row=2, column=1, sticky='e', pady=5)
+
+
 
         # ---- Macro List Section ----
         list_frame = ttk.LabelFrame(frame, text="Saved Macros", padding=8)
@@ -511,6 +514,11 @@ class CNCSenderApp:
         ttk.Button(btn_frame, text="Move Down", width=16, command=self._move_macro_down).pack(pady=5)
         ttk.Button(btn_frame, text="Save Macros", width=16, command=self._save_macros).pack(pady=5)
         ttk.Button(btn_frame, text="Edit Macro", width=16, command=self._edit_selected_macro).pack(pady=5)
+        ttk.Button(btn_frame, text="", width=16,).pack(pady=5)
+        
+        style = ttk.Style()
+        style.configure("Red.TButton", foreground="red")
+        ttk.Button(btn_frame,text="E Stop/Sft Rst",style="Red.TButton",command=lambda: self.send_realtime(b"\x18")).pack(pady=5)
 
         #ttk.Button(btn_frame, text="Load Macros", width=16, command=self._load_macros).pack(pady=5)
         
@@ -596,6 +604,11 @@ class CNCSenderApp:
         ttk.Button(actions, text="Start Probing", command=self.start_autolevel).grid(row=0, column=0, padx=6)                          
         ttk.Button(actions, text="Stop Probing", command=self.stop_autolevel).grid(row=0, column=1, padx=6)
         ttk.Button(actions, text="Visualize Map", command=self.visualize_al_map).grid(row=1, column=1, padx=6, pady=10)
+        
+        style = ttk.Style()
+        style.configure("Red.TButton", foreground="red")
+        ttk.Button(actions,text="E Stop/Sft Rst",style="Red.TButton",command=lambda: self.send_realtime(b"\x18")).grid(row=1, column=2,padx=6, pady=10)
+        
         # ttk.Button(actions, text="Export CSV", command=self.export_al_csv).grid(row=1, column=2, padx=6, pady=10)
         ttk.Button(actions, text="Apply Correction to Loaded G-code", command=self.apply_height_map_to_gcode).grid(row=0, column=2, padx=6)
         ttk.Button(actions, text="Save Corrected G-code", command=self.save_corrected_gcode).grid(row=0, column=3, padx=6)
@@ -738,12 +751,16 @@ class CNCSenderApp:
         
         ttk.Button(ss_frame, text="Save UI Settings",
                   command=self.update_ui_settings).grid(row=0, column=0, padx=10) 
+                  
+        style = ttk.Style()
+        style.configure("Red.TButton", foreground="red")
+        ttk.Button(ss_frame,text="E Stop/Sft Rst",style="Red.TButton",command=lambda: self.send_realtime(b"\x18")).grid(row=0, column=1,padx=6, pady=10)
 
 
 
 # ------------------ estop function ----------------------------------------------
     def send_realtime(self, b):
-        self._log(f"Soft Reset")
+        self._log(f"Estop/Soft Reset (Ctrl-X)")
         if self.serial_connection and self.serial_connection.is_open:
             try:
                 self.serial_connection.write(b)
