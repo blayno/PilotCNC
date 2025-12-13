@@ -721,7 +721,7 @@ class CNCSenderApp:
 
 
         # ----- X Center Probe Section -----
-        x_frame = ttk.LabelFrame(frame, text="X Inside Center Probe", padding=8)
+        x_frame = ttk.LabelFrame(frame, text="X Centering Probe Inside", padding=8)
         x_frame.pack(fill='x', pady=5)
 
         ttk.Label(x_frame, text="Probe Distance:").grid(row=0, column=0, sticky='e')
@@ -745,10 +745,10 @@ class CNCSenderApp:
         
 
         ttk.Button(x_frame, text="Run X Center Probe", command=self.x_center_probe_from_entries).grid(row=0, column=4, padx=10)
-        ttk.Label(x_frame, text="Retract is Probe Distance so measure your probing \nDont enter a random number or you might crash").grid(row=0, column=5, padx=10)
+        # ttk.Label(x_frame, text="Retract is Probe Distance so measure your probing \nDont enter a random number or you might crash").grid(row=0, column=5, padx=10)
 
         # ----- Y Center Probe Section -----
-        y_frame = ttk.LabelFrame(frame, text="Y Inside Center Probe", padding=8)
+        y_frame = ttk.LabelFrame(frame, text="Y Centering Probe Inside", padding=8)
         y_frame.pack(fill='x', pady=5)
 
         ttk.Label(y_frame, text="Probe Distance:").grid(row=0, column=0, sticky='e')
@@ -770,7 +770,7 @@ class CNCSenderApp:
         self.y_feed_entry.insert(0, str(self.config["y_prb_feed"]))        
 
         ttk.Button(y_frame, text="Run Y Center Probe", command=self.y_center_probe_from_entries).grid(row=0, column=4, padx=10)
-        ttk.Label(y_frame, text="Retract is Probe Distance so measure your probing \nDont enter a random number or you might crash").grid(row=0, column=5, padx=10)
+        # ttk.Label(y_frame, text="Retract is Probe Distance so measure your probing \nDont enter a random number or you might crash").grid(row=0, column=5, padx=10)
                   
         ss_frame = ttk.LabelFrame(frame, text="Save UI Settings / E stop", padding=8)
         ss_frame.pack(fill='x', pady=5)
